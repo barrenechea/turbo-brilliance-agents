@@ -45,11 +45,14 @@ function sameRule(left, right) {
 /** Applies the built-in agent overlays to an opencode config, keeping any system prompt the user wrote; returns the names it skipped. */
 export function mergeOverlays(config, overlays) {
   config.agents ??= {};
+  for (const [name, overlay] of staleKeys(config, overlays)) takeBackAgent(config, name, overlay);
   const skipped = [];
   for (const [name, overlay] of Object.entries(overlays)) {
     const agent = (config.agents[name] ??= {});
-    if (agent.system && !OVERLAY_SYSTEM_PATTERN.test(agent.system)) skipped.push(name);
+    const ownsPrompt = !agent.system || OVERLAY_SYSTEM_PATTERN.test(agent.system);
+    if (!ownsPrompt) skipped.push(name);
     else agent.system = overlay.system;
+    if (ownsPrompt && overlay.mode && agent.mode === undefined) agent.mode = overlay.mode;
     const rules = (agent.permissions ??= []);
     for (const rule of overlay.permissions) if (!rules.some((existing) => sameRule(existing, rule))) rules.push(rule);
     if (rules.length === 0) delete agent.permissions;
@@ -57,17 +60,32 @@ export function mergeOverlays(config, overlays) {
   return skipped;
 }
 
-/** Undoes mergeOverlays and the Windows plugin registration, removing only what this project added. */
+/** Undoes mergeOverlays and the Windows plugin registration, removing only what this project added: an agent whose `system` is the user's own is left exactly as they wrote it, `mode` included. */
 export function removeOverlays(config, overlays, pluginEntry) {
-  for (const [name, overlay] of Object.entries(overlays)) {
-    const agent = config.agents?.[name];
-    if (!agent) continue;
-    if (agent.system && OVERLAY_SYSTEM_PATTERN.test(agent.system)) delete agent.system;
-    if (agent.permissions) agent.permissions = agent.permissions.filter((rule) => !overlay.permissions.some((ours) => sameRule(ours, rule)));
-    if (agent.permissions?.length === 0) delete agent.permissions;
-    if (Object.keys(agent).length === 0) delete config.agents[name];
-  }
+  for (const [name, overlay] of [...Object.entries(overlays), ...staleKeys(config, overlays)]) takeBackAgent(config, name, overlay);
   if (config.plugins) config.plugins = config.plugins.filter((plugin) => (typeof plugin === "string" ? plugin : plugin.package) !== pluginEntry);
+}
+
+function promptFileOf(system) {
+  return typeof system === "string" && OVERLAY_SYSTEM_PATTERN.test(system) ? system.slice(system.lastIndexOf("/") + 1, -1) : undefined;
+}
+
+function staleKeys(config, overlays) {
+  const overlayByPrompt = new Map(Object.values(overlays).map((overlay) => [promptFileOf(overlay.system), overlay]));
+  return Object.entries(config.agents ?? {})
+    .filter(([name, agent]) => !(name in overlays) && overlayByPrompt.has(promptFileOf(agent.system)))
+    .map(([name, agent]) => [name, overlayByPrompt.get(promptFileOf(agent.system))]);
+}
+
+function takeBackAgent(config, name, overlay) {
+  const agent = config.agents?.[name];
+  if (!agent) return;
+  const ownsPrompt = promptFileOf(agent.system) !== undefined;
+  if (ownsPrompt) delete agent.system;
+  if (agent.permissions) agent.permissions = agent.permissions.filter((rule) => !overlay.permissions.some((ours) => sameRule(ours, rule)));
+  if (agent.permissions?.length === 0) delete agent.permissions;
+  if (ownsPrompt && overlay.mode && agent.mode === overlay.mode) delete agent.mode;
+  if (Object.keys(agent).length === 0) delete config.agents[name];
 }
 
 function findConfigFile(opencodeDir) {

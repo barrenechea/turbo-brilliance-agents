@@ -32,6 +32,8 @@ const TEMPLATE_MODES = new Set([
 
 const INSTRUCT_PREFIX = "i";
 
+const AGENT_MODES = new Set(["primary", "subagent", "all"]);
+
 const WRITING_BUILTIN_SUBAGENTS = ["general"];
 
 const COLORS = {
@@ -59,8 +61,12 @@ export function parseRole(source) {
       return [line.slice(0, separator).trim(), line.slice(separator + 2).trim()];
     }),
   );
+  const overlay = fields.overlay === "true";
   if (fields.reason && !isTemplateMode(fields.reason)) throw new Error(`${fields.name}: unknown reason mode "${fields.reason}"`);
-  return { ...fields, steps: Number(fields.steps), overlay: fields.overlay === "true", body: match[2].trim() };
+  if (fields.mode && !AGENT_MODES.has(fields.mode)) throw new Error(`${fields.name}: unknown mode "${fields.mode}"`);
+  if (fields.mode && !overlay) throw new Error(`${fields.name}: mode is only valid on an overlay`);
+  if (fields.title && !overlay) throw new Error(`${fields.name}: title is only valid on an overlay`);
+  return { ...fields, steps: Number(fields.steps), overlay, body: match[2].trim() };
 }
 
 /** Mirrors the chat template's check: a known mode, optionally prefixed with "i" for instruct (no thinking). */
@@ -138,10 +144,11 @@ function renderOverlays(roles) {
   const overlays = roles
     .filter((role) => role.overlay)
     .map((role) => [
-      role.name,
+      role.title ?? role.name,
       {
         system: `{file:${join(DIST_DIR, "prompts", `${role.name}.md`).replaceAll("\\", "/")}}`,
         permissions: role.access === "write" ? [] : writers.map((writer) => ({ action: "subagent", resource: writer, effect: "deny" })),
+        ...(role.mode ? { mode: role.mode } : {}),
       },
     ]);
   return Object.fromEntries(overlays);

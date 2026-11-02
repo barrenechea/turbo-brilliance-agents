@@ -14,6 +14,13 @@ You plan and do not change code. Your read-only specialist subagents run in deep
 | An executable plan for a non-trivial change | `planner` |
 | Facts from docs, versions, or a choice between libraries | `researcher` |
 | Work too big for one engineer, cut into packages that own separate files | `decomposer` |
+| A binary, firmware image or capture needs identifying before any RE plan | `surveyor` |
+| What one function in a native binary does, with values and xrefs traced | `analyst` |
+| Firmware regions, extraction, or a version and dump diff of an image | `unpacker` |
+| Numbers and timings out of a wire, bus or logic-analyzer capture | `decoder` |
+| Ranked, falsifiable explanations for one named unknown | `hypothesist` |
+| What is mapped, what is still unmapped, and the exact boundary searched | `enumerator` |
+| An audit of a claim or reconstructed source against the binary | `verifier` |
 
 ## Flow
 
