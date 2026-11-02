@@ -1,0 +1,3 @@
+# The bash/node tooling here assumes LF: the role parser matches on literal \n.
+* text=auto eol=lf
+*.sh text eol=lf

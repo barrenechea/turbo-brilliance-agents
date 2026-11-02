@@ -108,7 +108,13 @@ function toYaml(fields, indent = "") {
 
 function writeFile(path, content) {
   mkdirSync(dirname(path), { recursive: true });
+  if (existsSync(path) && readFileSync(path, "utf8") === content) return;
   writeFileSync(path, content);
+}
+
+function copyFile(src, dest) {
+  if (existsSync(dest) && readFileSync(dest, "utf8") === readFileSync(src, "utf8")) return;
+  copyFileSync(src, dest);
 }
 
 function renderAgent(role, config) {
@@ -130,7 +136,7 @@ function renderOverlays(roles) {
     .map((role) => [
       role.name,
       {
-        system: `{file:${join(DIST_DIR, "prompts", `${role.name}.md`)}}`,
+        system: `{file:${join(DIST_DIR, "prompts", `${role.name}.md`).replaceAll("\\", "/")}}`,
         permissions: role.access === "write" ? [] : writers.map((writer) => ({ action: "subagent", resource: writer, effect: "deny" })),
       },
     ]);
@@ -153,7 +159,15 @@ export function build() {
   const roles = loadRoles();
   const pluginDir = join(DIST_DIR, "plugin");
   const concurrencyRule = renderConcurrencyRule(config.maxConcurrentSubagents);
-  rmSync(DIST_DIR, { recursive: true, force: true });
+  try {
+    rmSync(DIST_DIR, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  } catch (error) {
+    // A running OpenCode server holds the loaded plugin files open on Windows, which blocks deleting them.
+    // Keep dist/plugin and overwrite its files instead; unchanged writes and copies are skipped.
+    if (error.code !== "EPERM" && error.code !== "ENOTEMPTY") throw error;
+    for (const dir of ["agents", "prompts"]) rmSync(join(DIST_DIR, dir), { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+    rmSync(join(DIST_DIR, "overlays.json"), { force: true });
+  }
   for (const role of roles) {
     if (role.overlay) writeFile(join(DIST_DIR, "prompts", `${role.name}.md`), `${role.body}${concurrencyRule}\n`);
     else writeFile(join(DIST_DIR, "agents", `${role.name}.md`), renderAgent(role, config));
@@ -168,10 +182,20 @@ export function build() {
     maxConcurrentSubagents: config.maxConcurrentSubagents,
     agents,
   };
-  writeFile(join(pluginDir, "settings.json"), JSON.stringify(settings, null, 2));
-  copyFileSync(join(SRC_DIR, "reason-tag.mjs"), join(pluginDir, "reason-tag.mjs"));
-  copyFileSync(join(SRC_DIR, "subagent-slots.mjs"), join(pluginDir, "subagent-slots.mjs"));
-  copyFileSync(join(SRC_DIR, "opencode-plugin.ts"), join(pluginDir, "index.ts"));
+  try {
+    writeFile(join(pluginDir, "settings.json"), JSON.stringify(settings, null, 2));
+    copyFile(join(SRC_DIR, "reason-tag.mjs"), join(pluginDir, "reason-tag.mjs"));
+    copyFile(join(SRC_DIR, "subagent-slots.mjs"), join(pluginDir, "subagent-slots.mjs"));
+    copyFile(join(SRC_DIR, "opencode-plugin.ts"), join(pluginDir, "index.ts"));
+  } catch (error) {
+    if (error.code === "EPERM" || error.code === "EBUSY") {
+      // On Windows a running OpenCode server holds these files open. The rest of the install still works;
+      // close OpenCode, install again and reopen it to refresh the plugin.
+      console.warn(`warning: a changed plugin file could not be written because the running OpenCode server holds ${pluginDir} open.`);
+    } else {
+      throw error;
+    }
+  }
   return roles;
 }
 

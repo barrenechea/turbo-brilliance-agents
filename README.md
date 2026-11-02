@@ -99,6 +99,15 @@ The script:
 
 It is idempotent: run it again after a `git pull`, after editing a role, or after moving the clone. Set `OPENCODE_CONFIG_DIR` to install somewhere else. Set `"model": null` in `turbo.config.local.json` to let subagents inherit the parent's model.
 
+### Windows
+
+Run `.\install.ps1` (PowerShell) instead of `./install.sh`. It needs no bash: it uses Node from `PATH`, falling back to the Node bundled with OpenCode Desktop. Differences from the bash flow:
+
+- agents are copied into the config dir instead of symlinked, because creating symlinks needs admin or Developer Mode. Rerun the script after a `git pull` or a role edit to refresh the copies.
+- the plugin is registered in the config's `plugins` array instead of linked into `plugins/`.
+- while OpenCode runs, its server keeps the files under `dist/plugin` open, so a changed plugin file cannot be rewritten. The build then warns and installs the rest. To update plugin code: close OpenCode, run `.\install.ps1`, and reopen it.
+
+
 ## Layout
 
 ```
