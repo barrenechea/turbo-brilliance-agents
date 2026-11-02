@@ -1,7 +1,4 @@
-// Windows equivalent of install.sh. Copies agents instead of symlinking them,
-// because creating symlinks needs admin (or Developer Mode) on Windows; rerun
-// this after a git pull or a role edit to refresh the copies. Registers the
-// plugin through the config's `plugins` array instead of linking it.
+// Creating symlinks needs admin or Developer Mode on Windows, so agents are copied and the plugin is registered by URL.
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
@@ -15,7 +12,6 @@ const CONFIG_DIR = process.env.OPENCODE_CONFIG_DIR ?? join(homedir(), ".config",
 const roles = build();
 console.log(`built ${roles.length} roles into ${join(ROOT, "dist")}`);
 
-// dist/agents/*.md -> <config>/agents/, with a manifest so removed roles get cleaned up
 const agentsDir = join(CONFIG_DIR, "agents");
 const distAgents = join(ROOT, "dist", "agents");
 mkdirSync(agentsDir, { recursive: true });
@@ -27,11 +23,9 @@ for (const file of installed) cpSync(join(distAgents, file), join(agentsDir, fil
 writeFileSync(manifestPath, `${JSON.stringify(installed, null, 2)}\n`);
 console.log(`copied ${installed.length} agents into ${agentsDir}`);
 
-// overlays into the config (also writes the .bak); do this before the plugins
-// merge so the .bak keeps the file as you wrote it
+// configure() writes the .bak, so it must run before the plugins write below for the backup to hold the user's own file.
 configure(CONFIG_DIR, join(ROOT, "dist", "overlays.json"));
 
-// register dist/plugin in the config's plugins array
 const configFile = ["opencode.jsonc", "opencode.json"].map((file) => join(CONFIG_DIR, file)).find((path) => existsSync(path)) ?? join(CONFIG_DIR, "opencode.json");
 const source = readFileSync(configFile, "utf8");
 const config = JSON.parse(stripJsonc(source));

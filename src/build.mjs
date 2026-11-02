@@ -45,9 +45,13 @@ const COLORS = {
   cyan: "#05a2c2",
 };
 
+function toLf(text) {
+  return text.replaceAll("\r\n", "\n");
+}
+
 /** Splits a role file into its flat `key: value` frontmatter and its markdown body. */
 export function parseRole(source) {
-  const match = source.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  const match = toLf(source).match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
   if (!match) throw new Error("role file needs frontmatter");
   const fields = Object.fromEntries(
     match[1].split("\n").map((line) => {
@@ -66,7 +70,7 @@ export function isTemplateMode(reason) {
 }
 
 function loadRoles() {
-  const sharedRules = readFileSync(join(ROLES_DIR, SHARED_RULES_FILE), "utf8").trim();
+  const sharedRules = toLf(readFileSync(join(ROLES_DIR, SHARED_RULES_FILE), "utf8")).trim();
   return readdirSync(ROLES_DIR)
     .filter((file) => file.endsWith(".md") && file !== SHARED_RULES_FILE)
     .map((file) => parseRole(readFileSync(join(ROLES_DIR, file), "utf8")))
@@ -162,8 +166,7 @@ export function build() {
   try {
     rmSync(DIST_DIR, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   } catch (error) {
-    // A running OpenCode server holds the loaded plugin files open on Windows, which blocks deleting them.
-    // Keep dist/plugin and overwrite its files instead; unchanged writes and copies are skipped.
+    // On Windows a running OpenCode server holds the loaded plugin files open, so dist/plugin cannot be deleted.
     if (error.code !== "EPERM" && error.code !== "ENOTEMPTY") throw error;
     for (const dir of ["agents", "prompts"]) rmSync(join(DIST_DIR, dir), { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
     rmSync(join(DIST_DIR, "overlays.json"), { force: true });
@@ -189,8 +192,6 @@ export function build() {
     copyFile(join(SRC_DIR, "opencode-plugin.ts"), join(pluginDir, "index.ts"));
   } catch (error) {
     if (error.code === "EPERM" || error.code === "EBUSY") {
-      // On Windows a running OpenCode server holds these files open. The rest of the install still works;
-      // close OpenCode, install again and reopen it to refresh the plugin.
       console.warn(`warning: a changed plugin file could not be written because the running OpenCode server holds ${pluginDir} open.`);
     } else {
       throw error;

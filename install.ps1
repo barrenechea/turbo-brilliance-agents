@@ -1,5 +1,3 @@
-# Windows equivalent of install.sh. Uses Node from PATH, or the Node inside
-# OpenCode Desktop (>= 24) when no standalone Node is installed.
 $ErrorActionPreference = "Stop"
 $node = Get-Command node.exe -ErrorAction SilentlyContinue
 if ($node) {

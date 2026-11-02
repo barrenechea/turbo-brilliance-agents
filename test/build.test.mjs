@@ -93,3 +93,13 @@ test("turbo.config.local.json overrides the shared config one level deep", () =>
 
   assert.deepEqual(actualConfig, { providerID: "local", model: "local/tb-50x", builtinReasons: { explore: "ioff", general: "logic" } });
 });
+
+test("a role saved with CRLF line endings parses like the LF version", () => {
+  const inputLf = "---\nname: scout\nreason: xsocrates\nsteps: 15\n---\nScope it.\n";
+  const inputCrlf = inputLf.replaceAll("\n", "\r\n");
+
+  const actualRole = parseRole(inputCrlf);
+
+  assert.deepEqual(actualRole, parseRole(inputLf));
+  assert.equal(actualRole.reason, "xsocrates");
+});
