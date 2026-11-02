@@ -1,0 +1,10 @@
+{
+  "model": "sff/qwen",
+  "providerID": "sff",
+  "compactionReason": "ioff",
+  "maxConcurrentSubagents": 1,
+  "builtinReasons": {
+    "explore": "low",
+    "general": "logic"
+  }
+}

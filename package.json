@@ -1,0 +1,11 @@
+{
+  "name": "turbo-brilliance-agents",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "build": "node src/build.mjs",
+    "test": "node src/build.mjs && node --test test/"
+  }
+}
