@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { isTemplateMode, loadConfig, parseRole } from "../src/build.mjs";
-import { mergeOverlays, stripJsonc } from "../src/configure.mjs";
+import { mergeOverlays, removeOverlays, stripJsonc } from "../src/configure.mjs";
 import { tagWithReason } from "../src/reason-tag.mjs";
 import { createSlots } from "../src/subagent-slots.mjs";
 
@@ -102,4 +102,23 @@ test("a role saved with CRLF line endings parses like the LF version", () => {
 
   assert.deepEqual(actualRole, parseRole(inputLf));
   assert.equal(actualRole.reason, "xsocrates");
+});
+
+test("removeOverlays undoes mergeOverlays and the plugin entry, and keeps the user's own settings", () => {
+  const inputOverlays = {
+    build: { system: "{file:/repo/dist/prompts/build.md}", permissions: [] },
+    plan: { system: "{file:/repo/dist/prompts/plan.md}", permissions: [{ action: "subagent", resource: "engineer", effect: "deny" }] },
+  };
+  const inputPlugin = "file:///repo/dist/plugin";
+  const expectedConfig = {
+    plugins: ["opencode-browser-v2"],
+    agents: { build: { request: { body: { top_p: 0.95 } } }, plan: { system: "my own prompt" } },
+  };
+  const actualConfig = structuredClone(expectedConfig);
+  mergeOverlays(actualConfig, inputOverlays);
+  actualConfig.plugins.push(inputPlugin);
+
+  removeOverlays(actualConfig, inputOverlays, inputPlugin);
+
+  assert.deepEqual(actualConfig, expectedConfig);
 });

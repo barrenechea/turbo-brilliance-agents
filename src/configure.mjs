@@ -57,20 +57,30 @@ export function mergeOverlays(config, overlays) {
   return skipped;
 }
 
-function findConfigFile(opencodeDir) {
-  const existing = CONFIG_FILES.map((file) => join(opencodeDir, file)).find((path) => existsSync(path));
-  return existing ?? join(opencodeDir, "opencode.json");
+/** Undoes mergeOverlays and the Windows plugin registration, removing only what this project added. */
+export function removeOverlays(config, overlays, pluginEntry) {
+  for (const [name, overlay] of Object.entries(overlays)) {
+    const agent = config.agents?.[name];
+    if (!agent) continue;
+    if (agent.system && OVERLAY_SYSTEM_PATTERN.test(agent.system)) delete agent.system;
+    if (agent.permissions) agent.permissions = agent.permissions.filter((rule) => !overlay.permissions.some((ours) => sameRule(ours, rule)));
+    if (agent.permissions?.length === 0) delete agent.permissions;
+    if (Object.keys(agent).length === 0) delete config.agents[name];
+  }
+  if (config.plugins) config.plugins = config.plugins.filter((plugin) => (typeof plugin === "string" ? plugin : plugin.package) !== pluginEntry);
 }
 
-/** Patches the user's opencode config with the overlays from dist/, backing the file up before any change. */
-export function configure(opencodeDir, overlaysPath) {
-  const configPath = findConfigFile(opencodeDir);
+function findConfigFile(opencodeDir) {
+  return CONFIG_FILES.map((file) => join(opencodeDir, file)).find((path) => existsSync(path));
+}
+
+function updateConfig(opencodeDir, change) {
+  const configPath = findConfigFile(opencodeDir) ?? join(opencodeDir, "opencode.json");
   const source = existsSync(configPath) ? readFileSync(configPath, "utf8") : '{ "$schema": "https://opencode.ai/config.json" }';
   const plainJson = stripJsonc(source);
   const config = JSON.parse(plainJson);
-  const skipped = mergeOverlays(config, JSON.parse(readFileSync(overlaysPath, "utf8")));
+  change(config);
   const updated = `${JSON.stringify(config, null, 2)}\n`;
-  for (const name of skipped) console.log(`kept your own system prompt for "${name}"; add the delegation prompt by hand if you want it`);
   if (updated === source) return console.log(`${configPath} already up to date`);
   if (existsSync(configPath)) copyFileSync(configPath, `${configPath}.bak`);
   if (plainJson !== source) console.log(`comments and trailing commas in ${configPath} were dropped; the original is at ${configPath}.bak`);
@@ -78,7 +88,26 @@ export function configure(opencodeDir, overlaysPath) {
   console.log(`updated ${configPath}`);
 }
 
+/** Patches the user's opencode config with the overlays from dist/, backing the file up before any change. */
+export function configure(opencodeDir, overlaysPath) {
+  updateConfig(opencodeDir, (config) => {
+    const skipped = mergeOverlays(config, JSON.parse(readFileSync(overlaysPath, "utf8")));
+    for (const name of skipped) console.log(`kept your own system prompt for "${name}"; add the delegation prompt by hand if you want it`);
+  });
+}
+
+/** Removes this project's overlays and plugin registration from the user's opencode config, if it has one. */
+export function unconfigure(opencodeDir, overlays, pluginEntry) {
+  if (!findConfigFile(opencodeDir)) return;
+  updateConfig(opencodeDir, (config) => removeOverlays(config, overlays, pluginEntry));
+}
+
 if (import.meta.main) {
-  const [opencodeDir, overlaysPath] = process.argv.slice(2);
-  configure(opencodeDir, overlaysPath);
+  const [first, ...rest] = process.argv.slice(2);
+  if (first === "--uninstall") {
+    const { overlayPatches, pluginEntryURL } = await import("./build.mjs");
+    unconfigure(rest[0], overlayPatches(), pluginEntryURL());
+  } else {
+    configure(first, rest[0]);
+  }
 }

@@ -10,7 +10,7 @@ if ($node) {
 # crashpad in Electron-as-Node writes noise to stderr; do not let it throw
 $prev = $ErrorActionPreference
 $ErrorActionPreference = "Continue"
-& $node (Join-Path $PSScriptRoot "install-win.mjs") 2>&1 | Where-Object { $_ -notmatch "crashpad" }
+& $node (Join-Path $PSScriptRoot "install-win.mjs") @args 2>&1 | Where-Object { $_ -notmatch "crashpad" }
 $code = $LASTEXITCODE
 $ErrorActionPreference = $prev
 if ($code -ne 0) { throw "install-win.mjs failed with exit code $code" }

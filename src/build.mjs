@@ -1,6 +1,6 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const ROLES_DIR = join(ROOT, "roles");
@@ -145,6 +145,16 @@ function renderOverlays(roles) {
       },
     ]);
   return Object.fromEntries(overlays);
+}
+
+/** Returns the config patches for the built-in agents, computed from the roles without writing dist/. */
+export function overlayPatches() {
+  return renderOverlays(loadRoles());
+}
+
+/** Returns the file URL under which the Windows installer registers the plugin in the config's plugins array. */
+export function pluginEntryURL() {
+  return pathToFileURL(join(DIST_DIR, "plugin")).href;
 }
 
 /** Describes the subagent concurrency limit to the main agents, so they plan for it instead of only being made to wait. */

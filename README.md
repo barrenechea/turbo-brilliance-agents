@@ -107,6 +107,19 @@ Run `.\install.ps1` (PowerShell) instead of `./install.sh`. It needs no bash: it
 - the plugin is registered in the config's `plugins` array instead of linked into `plugins/`.
 - while OpenCode runs, its server keeps the files under `dist/plugin` open, so a changed plugin file cannot be rewritten. The build then warns and installs the rest. To update plugin code: close OpenCode, run `.\install.ps1`, and reopen it.
 
+### Uninstall
+
+```bash
+./install.sh --uninstall
+```
+
+On Windows, run `.\install.ps1 --uninstall`. Either one removes only what the install added:
+
+- the agent links (on Windows, the copies listed in `agents/.turbo-brilliance.json`),
+- the plugin link (on Windows, the plugin entry in `plugins`),
+- the `{file:...}` prompts on `build` and `plan` and the subagent rules added to `plan`.
+
+Your own agents, plugins and settings stay, and so does a `system` you wrote yourself. The config is saved as `.bak` before the change, and the clone is not deleted. Restart opencode afterwards.
 
 ## Layout
 
