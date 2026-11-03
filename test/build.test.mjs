@@ -5,8 +5,8 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { isTemplateMode, loadConfig, overlayPatches, parseRole } from "../src/build.mjs";
 import { mergeOverlays, removeOverlays, stripJsonc } from "../src/configure.mjs";
-import { tagWithReason } from "../src/reason-tag.mjs";
-import { createSlots } from "../src/subagent-slots.mjs";
+import { tagWithReason } from "../src/reason-tag.ts";
+import { createSlots } from "../src/subagent-slots.ts";
 
 test("tagWithReason prefixes the mode and keeps a tag that is already there", () => {
   const actualPlain = tagWithReason("check the diff", "house");

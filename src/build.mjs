@@ -204,8 +204,8 @@ export function build() {
   };
   try {
     writeFile(join(pluginDir, "settings.json"), JSON.stringify(settings, null, 2));
-    copyFile(join(SRC_DIR, "reason-tag.mjs"), join(pluginDir, "reason-tag.mjs"));
-    copyFile(join(SRC_DIR, "subagent-slots.mjs"), join(pluginDir, "subagent-slots.mjs"));
+    copyFile(join(SRC_DIR, "reason-tag.ts"), join(pluginDir, "reason-tag.ts"));
+    copyFile(join(SRC_DIR, "subagent-slots.ts"), join(pluginDir, "subagent-slots.ts"));
     copyFile(join(SRC_DIR, "opencode-plugin.ts"), join(pluginDir, "index.ts"));
   } catch (error) {
     if (error.code === "EPERM" || error.code === "EBUSY") {

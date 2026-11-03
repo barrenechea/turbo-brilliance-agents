@@ -152,9 +152,9 @@ Your own agents, plugins and settings stay, and so does any agent whose `system`
 roles/                 one file per role (frontmatter + prompt); _shared.md is appended to every subagent
                        build.md and plan.md are overlays on opencode's built-in agents; re.md adds the
                        reverse-engineering primary agent
-src/reason-tag.mjs     the tagging rule
+src/reason-tag.ts      the tagging rule
 src/opencode-plugin.ts the plugin: mode tags and the subagent limit
-src/subagent-slots.mjs the queue behind the limit
+src/subagent-slots.ts  the queue behind the limit
 src/build.mjs          roles -> dist/agents, dist/prompts, dist/overlays.json, dist/plugin (with settings.json)
 src/configure.mjs      merges dist/overlays.json into the opencode config
 turbo.config.json      model, provider, compaction mode, subagent limit, modes for built-in subagents
