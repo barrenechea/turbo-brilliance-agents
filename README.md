@@ -49,28 +49,28 @@ The Reverse Engineering primary agent (`roles/re.md`, installed under the config
 
 ## Roles
 
-| Role | Mode | Mode prompt | Tools | Use it for |
-| --- | --- | --- | --- | --- |
-| `scout` | `xsocrates` | ~245 tokens | read | Questioning a vague request, cheap plans for small tasks |
-| `planner` | `xdeeptree` | ~914 | read | Three competing designs, one executable plan |
-| `decomposer` | `hyper` (MECE) | ~800 | read | Splitting big work into packages that own separate files |
-| `researcher` | `spoon` (deep research panel) | ~946 | read + web | Comparing libraries and APIs, reading docs, with sources |
-| `engineer` | `logic` | ~162 | all | Tool-heavy implementation in existing code |
-| `mechanic` | `ilogic` (no thinking) | ~162 | all | Fully specified edits: renames, applying review fixes |
-| `builder` | `coder` (DevOracle) | ~2,650 | all | Greenfield modules written in a few tool calls |
-| `debugger` | `xlogic` | ~254 | all | Root cause by causal chain and falsifiable experiments |
-| `reviewer` | `house` | ~2,900 | read | Cynical diff review that keeps only findings backed by evidence |
-| `scribe` | `ioff` (no thinking, no mode prompt) | 0 | read | Commit messages, PR bodies, summaries |
-| `surveyor` | `xsocrates` | ~245 | read | First look at an unidentified binary, firmware image or capture |
-| `analyst` | `logic` | ~162 | read | What one function in a native binary does, with values and xrefs traced |
-| `unpacker` | `xlogic` | ~254 | read | Firmware images: region maps, extraction, version and dump diffs |
-| `decoder` | `xlogic` | ~254 | read | Numbers and timings out of a wire, bus or logic-analyzer capture |
-| `hypothesist` | `einstein` | ~260 (est.) | read | Ranked, falsifiable explanations for one unknown, each with its cheapest test |
-| `prober` | `xlogic` | ~254 | all | The experiment: bench builds, live probes, the original run side by side |
-| `enumerator` | `hyper` | ~800 | read | Counted coverage: what is understood, what is not, the boundary searched |
-| `verifier` | `matlock` | ~2,300 (est.) | read | Adversarial audit of a claim or reconstructed source against the binary |
-| `registrar` | `ioff` (no thinking, no mode prompt) | 0 | all | Appending findings to the evidence ledger with their labels and Evidence IDs |
-| `explainer` | `teacher` | ~3,300 (est.) | all | Protocol and byte-layout write-ups for a reader who will not open the disassembly |
+| Role          | Mode                                 | Mode prompt   | Tools      | Use it for                                                                        |
+| ------------- | ------------------------------------ | ------------- | ---------- | --------------------------------------------------------------------------------- |
+| `scout`       | `xsocrates`                          | ~245 tokens   | read       | Questioning a vague request, cheap plans for small tasks                          |
+| `planner`     | `xdeeptree`                          | ~914          | read       | Three competing designs, one executable plan                                      |
+| `decomposer`  | `hyper` (MECE)                       | ~800          | read       | Splitting big work into packages that own separate files                          |
+| `researcher`  | `spoon` (deep research panel)        | ~946          | read + web | Comparing libraries and APIs, reading docs, with sources                          |
+| `engineer`    | `logic`                              | ~162          | all        | Tool-heavy implementation in existing code                                        |
+| `mechanic`    | `ilogic` (no thinking)               | ~162          | all        | Fully specified edits: renames, applying review fixes                             |
+| `builder`     | `coder` (DevOracle)                  | ~2,650        | all        | Greenfield modules written in a few tool calls                                    |
+| `debugger`    | `xlogic`                             | ~254          | all        | Root cause by causal chain and falsifiable experiments                            |
+| `reviewer`    | `house`                              | ~2,900        | read       | Cynical diff review that keeps only findings backed by evidence                   |
+| `scribe`      | `ioff` (no thinking, no mode prompt) | 0             | read       | Commit messages, PR bodies, summaries                                             |
+| `surveyor`    | `xsocrates`                          | ~245          | read       | First look at an unidentified binary, firmware image or capture                   |
+| `analyst`     | `logic`                              | ~162          | read       | What one function in a native binary does, with values and xrefs traced           |
+| `unpacker`    | `xlogic`                             | ~254          | read       | Firmware images: region maps, extraction, version and dump diffs                  |
+| `decoder`     | `xlogic`                             | ~254          | read       | Numbers and timings out of a wire, bus or logic-analyzer capture                  |
+| `hypothesist` | `einstein`                           | ~260 (est.)   | read       | Ranked, falsifiable explanations for one unknown, each with its cheapest test     |
+| `prober`      | `xlogic`                             | ~254          | all        | The experiment: bench builds, live probes, the original run side by side          |
+| `enumerator`  | `hyper`                              | ~800          | read       | Counted coverage: what is understood, what is not, the boundary searched          |
+| `verifier`    | `matlock`                            | ~2,300 (est.) | read       | Adversarial audit of a claim or reconstructed source against the binary           |
+| `registrar`   | `ioff` (no thinking, no mode prompt) | 0             | all        | Appending findings to the evidence ledger with their labels and Evidence IDs      |
+| `explainer`   | `teacher`                            | ~3,300 (est.) | all        | Protocol and byte-layout write-ups for a reader who will not open the disassembly |
 
 Mode prompt sizes are measured from rendered `prompt_tokens`. They are added to every request in the session, next to the tool schema. That is why the tool-heavy roles use the small modes (`logic`, `xlogic`), and the roughly 2,700-token personas (`coder`, `house`) go to roles that make few, chat-like turns. The `x` modes add the template's xhigh "think carefully" sentence. They are for roles where correctness beats speed. The three figures marked `est.` (`einstein` ~260, `matlock` ~2,300, `teacher` ~3,300) are the exception: estimated from the chat template's own text, not yet measured against rendered `prompt_tokens`.
 

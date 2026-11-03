@@ -8,11 +8,16 @@
   },
   "scripts": {
     "build": "node src/build.mjs",
+    "lint": "node src/build.mjs && oxlint",
+    "format": "oxfmt",
     "typecheck": "node src/build.mjs && tsc",
     "test": "node src/build.mjs && node --test test/"
   },
   "devDependencies": {
     "@opencode/plugin": "^2.2.5",
+    "oxfmt": "^0.76.0",
+    "oxlint": "^1.90.0",
+    "oxlint-tsgolint": "^7.0.2005",
     "typescript": "^7.0.2"
   }
 }

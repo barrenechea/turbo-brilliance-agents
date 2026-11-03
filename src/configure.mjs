@@ -15,10 +15,16 @@ export function stripJsonc(source) {
       output += source.slice(index, end);
       index = end;
     } else if (source.startsWith("//", index)) {
-      index = source.indexOf("\n", index) === -1 ? source.length : source.indexOf("\n", index);
+      index =
+        source.indexOf("\n", index) === -1
+          ? source.length
+          : source.indexOf("\n", index);
     } else if (source.startsWith("/*", index)) {
       index = source.indexOf("*/", index) + 2;
-    } else if (char === "," && /^\s*[}\]]/.test(stripLeadingComments(source.slice(index + 1)))) {
+    } else if (
+      char === "," &&
+      /^\s*[}\]]/.test(stripLeadingComments(source.slice(index + 1)))
+    ) {
       index += 1;
     } else {
       output += char;
@@ -39,22 +45,30 @@ function stripLeadingComments(rest) {
 }
 
 function sameRule(left, right) {
-  return left.action === right.action && left.resource === right.resource && left.effect === right.effect;
+  return (
+    left.action === right.action &&
+    left.resource === right.resource &&
+    left.effect === right.effect
+  );
 }
 
 /** Applies the built-in agent overlays to an opencode config, keeping any system prompt the user wrote; returns the names it skipped. */
 export function mergeOverlays(config, overlays) {
   config.agents ??= {};
-  for (const [name, overlay] of staleKeys(config, overlays)) takeBackAgent(config, name, overlay);
+  for (const [name, overlay] of staleKeys(config, overlays))
+    takeBackAgent(config, name, overlay);
   const skipped = [];
   for (const [name, overlay] of Object.entries(overlays)) {
     const agent = (config.agents[name] ??= {});
-    const ownsPrompt = !agent.system || OVERLAY_SYSTEM_PATTERN.test(agent.system);
+    const ownsPrompt =
+      !agent.system || OVERLAY_SYSTEM_PATTERN.test(agent.system);
     if (!ownsPrompt) skipped.push(name);
     else agent.system = overlay.system;
-    if (ownsPrompt && overlay.mode && agent.mode === undefined) agent.mode = overlay.mode;
+    if (ownsPrompt && overlay.mode && agent.mode === undefined)
+      agent.mode = overlay.mode;
     const rules = (agent.permissions ??= []);
-    for (const rule of overlay.permissions) if (!rules.some((existing) => sameRule(existing, rule))) rules.push(rule);
+    for (const rule of overlay.permissions)
+      if (!rules.some((existing) => sameRule(existing, rule))) rules.push(rule);
     if (rules.length === 0) delete agent.permissions;
   }
   return skipped;
@@ -62,19 +76,40 @@ export function mergeOverlays(config, overlays) {
 
 /** Undoes mergeOverlays and the Windows plugin registration, removing only what this project added: an agent whose `system` is the user's own is left exactly as they wrote it, `mode` included. */
 export function removeOverlays(config, overlays, pluginEntry) {
-  for (const [name, overlay] of [...Object.entries(overlays), ...staleKeys(config, overlays)]) takeBackAgent(config, name, overlay);
-  if (config.plugins) config.plugins = config.plugins.filter((plugin) => (typeof plugin === "string" ? plugin : plugin.package) !== pluginEntry);
+  for (const [name, overlay] of [
+    ...Object.entries(overlays),
+    ...staleKeys(config, overlays),
+  ])
+    takeBackAgent(config, name, overlay);
+  if (config.plugins)
+    config.plugins = config.plugins.filter(
+      (plugin) =>
+        (typeof plugin === "string" ? plugin : plugin.package) !== pluginEntry,
+    );
 }
 
 function promptFileOf(system) {
-  return typeof system === "string" && OVERLAY_SYSTEM_PATTERN.test(system) ? system.slice(system.lastIndexOf("/") + 1, -1) : undefined;
+  return typeof system === "string" && OVERLAY_SYSTEM_PATTERN.test(system)
+    ? system.slice(system.lastIndexOf("/") + 1, -1)
+    : undefined;
 }
 
 function staleKeys(config, overlays) {
-  const overlayByPrompt = new Map(Object.values(overlays).map((overlay) => [promptFileOf(overlay.system), overlay]));
+  const overlayByPrompt = new Map(
+    Object.values(overlays).map((overlay) => [
+      promptFileOf(overlay.system),
+      overlay,
+    ]),
+  );
   return Object.entries(config.agents ?? {})
-    .filter(([name, agent]) => !(name in overlays) && overlayByPrompt.has(promptFileOf(agent.system)))
-    .map(([name, agent]) => [name, overlayByPrompt.get(promptFileOf(agent.system))]);
+    .filter(
+      ([name, agent]) =>
+        !(name in overlays) && overlayByPrompt.has(promptFileOf(agent.system)),
+    )
+    .map(([name, agent]) => [
+      name,
+      overlayByPrompt.get(promptFileOf(agent.system)),
+    ]);
 }
 
 function takeBackAgent(config, name, overlay) {
@@ -82,26 +117,39 @@ function takeBackAgent(config, name, overlay) {
   if (!agent) return;
   const ownsPrompt = promptFileOf(agent.system) !== undefined;
   if (ownsPrompt) delete agent.system;
-  if (agent.permissions) agent.permissions = agent.permissions.filter((rule) => !overlay.permissions.some((ours) => sameRule(ours, rule)));
+  if (agent.permissions)
+    agent.permissions = agent.permissions.filter(
+      (rule) => !overlay.permissions.some((ours) => sameRule(ours, rule)),
+    );
   if (agent.permissions?.length === 0) delete agent.permissions;
-  if (ownsPrompt && overlay.mode && agent.mode === overlay.mode) delete agent.mode;
+  if (ownsPrompt && overlay.mode && agent.mode === overlay.mode)
+    delete agent.mode;
   if (Object.keys(agent).length === 0) delete config.agents[name];
 }
 
 function findConfigFile(opencodeDir) {
-  return CONFIG_FILES.map((file) => join(opencodeDir, file)).find((path) => existsSync(path));
+  return CONFIG_FILES.map((file) => join(opencodeDir, file)).find((path) =>
+    existsSync(path),
+  );
 }
 
 function updateConfig(opencodeDir, change) {
-  const configPath = findConfigFile(opencodeDir) ?? join(opencodeDir, "opencode.json");
-  const source = existsSync(configPath) ? readFileSync(configPath, "utf8") : '{ "$schema": "https://opencode.ai/config.json" }';
+  const configPath =
+    findConfigFile(opencodeDir) ?? join(opencodeDir, "opencode.json");
+  const source = existsSync(configPath)
+    ? readFileSync(configPath, "utf8")
+    : '{ "$schema": "https://opencode.ai/config.json" }';
   const plainJson = stripJsonc(source);
   const config = JSON.parse(plainJson);
   change(config);
   const updated = `${JSON.stringify(config, null, 2)}\n`;
-  if (updated === source) return console.log(`${configPath} already up to date`);
+  if (updated === source)
+    return console.log(`${configPath} already up to date`);
   if (existsSync(configPath)) copyFileSync(configPath, `${configPath}.bak`);
-  if (plainJson !== source) console.log(`comments and trailing commas in ${configPath} were dropped; the original is at ${configPath}.bak`);
+  if (plainJson !== source)
+    console.log(
+      `comments and trailing commas in ${configPath} were dropped; the original is at ${configPath}.bak`,
+    );
   writeFileSync(configPath, updated);
   console.log(`updated ${configPath}`);
 }
@@ -109,15 +157,23 @@ function updateConfig(opencodeDir, change) {
 /** Patches the user's opencode config with the overlays from dist/, backing the file up before any change. */
 export function configure(opencodeDir, overlaysPath) {
   updateConfig(opencodeDir, (config) => {
-    const skipped = mergeOverlays(config, JSON.parse(readFileSync(overlaysPath, "utf8")));
-    for (const name of skipped) console.log(`kept your own system prompt for "${name}"; add the delegation prompt by hand if you want it`);
+    const skipped = mergeOverlays(
+      config,
+      JSON.parse(readFileSync(overlaysPath, "utf8")),
+    );
+    for (const name of skipped)
+      console.log(
+        `kept your own system prompt for "${name}"; add the delegation prompt by hand if you want it`,
+      );
   });
 }
 
 /** Removes this project's overlays and plugin registration from the user's opencode config, if it has one. */
 export function unconfigure(opencodeDir, overlays, pluginEntry) {
   if (!findConfigFile(opencodeDir)) return;
-  updateConfig(opencodeDir, (config) => removeOverlays(config, overlays, pluginEntry));
+  updateConfig(opencodeDir, (config) =>
+    removeOverlays(config, overlays, pluginEntry),
+  );
 }
 
 if (import.meta.main) {

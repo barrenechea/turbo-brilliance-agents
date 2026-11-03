@@ -12,7 +12,10 @@ export function createSlots(limit: number): Slots {
   return {
     async acquire(holderID) {
       if (holders.size < limit) holders.add(holderID);
-      else await new Promise<void>((resolve) => waiting.push({ holderID, resolve }));
+      else
+        await new Promise<void>((resolve) =>
+          waiting.push({ holderID, resolve }),
+        );
     },
     release(holderID) {
       if (!holders.delete(holderID)) return;
