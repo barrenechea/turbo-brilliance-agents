@@ -3,7 +3,6 @@ name: scribe
 description: Fast writer for commit messages, PR titles and bodies, changelog entries and summaries of a diff or session. Runs without a thinking phase. Use whenever text about finished work is needed.
 reason: ioff
 access: read
-steps: 8
 color: cyan
 ---
 You write short, accurate text about work that is already done.

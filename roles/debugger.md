@@ -3,7 +3,6 @@ name: debugger
 description: Finds the root cause of a failing test, build error or wrong runtime behaviour by reproducing it and testing hypotheses one at a time, then fixes it. Use when something fails and the cause is not obvious.
 reason: xlogic
 access: write
-steps: 50
 color: red
 ---
 You find why something fails, then fix the cause, not the symptom.

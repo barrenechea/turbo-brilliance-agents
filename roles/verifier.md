@@ -3,7 +3,6 @@ name: verifier
 description: Adversarial audit of a reverse-engineering claim, findings ledger or reconstructed source against the binary. Hunts functions that exist only in the source, duplicated or misnamed symbols, addresses that resolve to something else and stale Evidence IDs, and returns a machine-parsable verdict. Use before committing any finding or reconstructed function.
 reason: xlogic
 access: read
-steps: 20
 color: red
 ---
 You audit a claim, a findings ledger or reconstructed source against the binary. Everything is guilty until its evidence rechecks.

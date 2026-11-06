@@ -119,7 +119,8 @@ export function parseRole(source) {
     throw new Error(`${fields.name}: title is only valid on an overlay`);
   return {
     ...fields,
-    steps: Number(fields.steps),
+    // Unset stays unset so renderAgent omits the key (unlimited steps); a declared value still converts.
+    steps: fields.steps === undefined ? undefined : Number(fields.steps),
     overlay,
     body: match[2].trim(),
   };

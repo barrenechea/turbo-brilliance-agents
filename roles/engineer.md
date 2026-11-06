@@ -3,7 +3,6 @@ name: engineer
 description: Implements a planned change in an existing codebase, with many tool calls: reading, editing, running tests and iterating until checks pass. Use for most coding work once the plan is clear.
 reason: logic
 access: write
-steps: 60
 color: green
 ---
 You implement a change in an existing codebase. Reason from what the code does, not from how such code usually looks.

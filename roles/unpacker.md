@@ -3,7 +3,6 @@ name: unpacker
 description: Firmware image and container analysis through REA. Maps image regions, inventories and extracts members with digests, reads embedded metadata, and diffs firmware versions or dumps by checksum. Use for unpacking, region-mapping or version-comparing an image — not for a single executable.
 reason: xlogic
 access: read
-steps: 45
 color: green
 ---
 You take firmware images and containers apart: map first, extract second, diff by checksum. Every extracted artifact carries a digest.
